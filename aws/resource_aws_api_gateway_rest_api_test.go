@@ -127,6 +127,47 @@ func TestAccAWSAPIGatewayRestApi_basic(t *testing.T) {
 	})
 }
 
+func TestAccAWSAPIGatewayRestApi_regional(t *testing.T) {
+	var conf apigateway.RestApi
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:     func() { testAccPreCheck(t) },
+		Providers:    testAccProviders,
+		CheckDestroy: testAccCheckAWSAPIGatewayRestAPIDestroy,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccAWSAPIGatewayRestAPIConfigRegional,
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckAWSAPIGatewayRestAPIExists("aws_api_gateway_rest_api.test", &conf),
+					testAccCheckAWSAPIGatewayRestAPINameAttribute(&conf, "bar"),
+					testAccCheckAWSAPIGatewayRestAPIMinimumCompressionSizeAttribute(&conf, 0),
+					resource.TestCheckResourceAttr("aws_api_gateway_rest_api.test", "name", "bar"),
+					resource.TestCheckResourceAttr("aws_api_gateway_rest_api.test", "description", ""),
+					resource.TestCheckResourceAttr("aws_api_gateway_rest_api.test", "minimum_compression_size", "0"),
+					resource.TestCheckResourceAttrSet("aws_api_gateway_rest_api.test", "created_date"),
+					resource.TestCheckNoResourceAttr("aws_api_gateway_rest_api.test", "binary_media_types"),
+				),
+			},
+
+			{
+				Config: testAccAWSAPIGatewayRestAPIUpdateConfigRegional,
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckAWSAPIGatewayRestAPIExists("aws_api_gateway_rest_api.test", &conf),
+					testAccCheckAWSAPIGatewayRestAPINameAttribute(&conf, "test"),
+					testAccCheckAWSAPIGatewayRestAPIDescriptionAttribute(&conf, "test"),
+					testAccCheckAWSAPIGatewayRestAPIMinimumCompressionSizeAttribute(&conf, 10485760),
+					resource.TestCheckResourceAttr("aws_api_gateway_rest_api.test", "name", "test"),
+					resource.TestCheckResourceAttr("aws_api_gateway_rest_api.test", "description", "test"),
+					resource.TestCheckResourceAttr("aws_api_gateway_rest_api.test", "minimum_compression_size", "10485760"),
+					resource.TestCheckResourceAttrSet("aws_api_gateway_rest_api.test", "created_date"),
+					resource.TestCheckResourceAttr("aws_api_gateway_rest_api.test", "binary_media_types.#", "1"),
+					resource.TestCheckResourceAttr("aws_api_gateway_rest_api.test", "binary_media_types.0", "application/octet-stream"),
+				),
+			},
+		},
+	})
+}
+
 func TestAccAWSAPIGatewayRestApi_openapi(t *testing.T) {
 	var conf apigateway.RestApi
 
@@ -290,6 +331,27 @@ func testAccCheckAWSAPIGatewayRestAPIDestroy(s *terraform.State) error {
 
 	return nil
 }
+
+const testAccAWSAPIGatewayRestAPIConfigRegional = `
+resource "aws_api_gateway_rest_api" "test" {
+  name = "bar"
+	endpoint_configuration {
+		type = "REGIONAL"
+	}
+}
+`
+
+const testAccAWSAPIGatewayRestAPIUpdateConfigRegional = `
+resource "aws_api_gateway_rest_api" "test" {
+  name = "test"
+  description = "test"
+  binary_media_types = ["application/octet-stream"]
+  minimum_compression_size = 10485760
+	endpoint_configuration {
+		type = "REGIONAL"
+	}
+}
+`
 
 const testAccAWSAPIGatewayRestAPIConfig = `
 resource "aws_api_gateway_rest_api" "test" {

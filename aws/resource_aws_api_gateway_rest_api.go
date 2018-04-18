@@ -59,6 +59,19 @@ func resourceAwsApiGatewayRestApi() *schema.Resource {
 				Type:     schema.TypeString,
 				Computed: true,
 			},
+
+			"endpoint_configuration": {
+				Type:     schema.TypeList,
+				Optional: true,
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"type": {
+							Type:     schema.TypeString,
+							Required: true,
+						},
+					},
+				},
+			},
 		},
 	}
 }
@@ -85,6 +98,18 @@ func resourceAwsApiGatewayRestApiCreate(d *schema.ResourceData, meta interface{}
 	minimumCompressionSize := d.Get("minimum_compression_size").(int)
 	if minimumCompressionSize > -1 {
 		params.MinimumCompressionSize = aws.Int64(int64(minimumCompressionSize))
+	}
+
+	// if there is an endpoint configuration set
+	ec := d.Get("endpoint_configuration").([]interface{})
+	if len(ec) > 0 {
+		c := ec[0].(map[string]interface{})
+
+		if c["type"].(string) != "" {
+			params.EndpointConfiguration = &apigateway.EndpointConfiguration{
+				Types: []*string{aws.String(d.Get("endpoint_configuration").(string))},
+			}
+		}
 	}
 
 	gateway, err := conn.CreateRestApi(params)
@@ -152,6 +177,7 @@ func resourceAwsApiGatewayRestApiRead(d *schema.ResourceData, meta interface{}) 
 	d.Set("name", api.Name)
 	d.Set("description", api.Description)
 	d.Set("binary_media_types", api.BinaryMediaTypes)
+	d.Set("endpoint_configuration", api.EndpointConfiguration)
 	if api.MinimumCompressionSize == nil {
 		d.Set("minimum_compression_size", -1)
 	} else {
