@@ -107,7 +107,7 @@ func resourceAwsApiGatewayRestApiCreate(d *schema.ResourceData, meta interface{}
 
 		if c["type"].(string) != "" {
 			params.EndpointConfiguration = &apigateway.EndpointConfiguration{
-				Types: []*string{aws.String(d.Get("endpoint_configuration").(string))},
+				Types: []*string{aws.String(c["type"].(string))},
 			}
 		}
 	}

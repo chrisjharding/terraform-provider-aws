@@ -335,6 +335,7 @@ func testAccCheckAWSAPIGatewayRestAPIDestroy(s *terraform.State) error {
 const testAccAWSAPIGatewayRestAPIConfigRegional = `
 resource "aws_api_gateway_rest_api" "test" {
   name = "bar"
+  minimum_compression_size = 0
 	endpoint_configuration {
 		type = "REGIONAL"
 	}
