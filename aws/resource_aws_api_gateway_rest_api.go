@@ -68,7 +68,6 @@ func resourceAwsApiGatewayRestApi() *schema.Resource {
 						"type": {
 							Type:     schema.TypeString,
 							Required: true,
-							ForceNew: true,
 						},
 					},
 				},
@@ -208,6 +207,16 @@ func resourceAwsApiGatewayRestApiUpdateOperations(d *schema.ResourceData) []*api
 			Path:  aws.String("/description"),
 			Value: aws.String(d.Get("description").(string)),
 		})
+	}
+
+	if d.HasChange("endpoint_configuration") {
+		if d.HasChange("endpoint_configuration.0.type") {
+			operations = append(operations, &apigateway.PatchOperation{
+				Op:    aws.String("replace"),
+				Path:  aws.String("/endpointConfiguration/types/{type}"),
+				Value: aws.String(d.Get("endpoint_configuration.0.type").(string)),
+			})
+		}
 	}
 
 	if d.HasChange("minimum_compression_size") {
